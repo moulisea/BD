@@ -1,4 +1,4 @@
-package com.jpmis.gdelt;
+package gdelt;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -28,15 +28,29 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+/** 
+ * @author 
+ */
+/*** A java class to download, MD5 validate and unzip a global dataset ***/
 public class DownloadData {
 
 	private static final Logger log = Logger.getLogger(DownloadData.class.getName());		
 
 	public int run(String dL, String hC, String uZ, String freq, String startRange, String endRange, String compFmt, String confProp) throws ParseException, IOException, NoSuchAlgorithmException {
 
+		/*** To fetch data from property file ***/
 		Properties prop = new Properties();
 		InputStream in = new FileInputStream(confProp);			
 		prop.load(in);
+		String zip = prop.getProperty("zip").trim();
+		String raw = prop.getProperty("raw").trim();
+		String csvzip = prop.getProperty("csvzip").trim();
+		String url = prop.getProperty("url").trim();
+		String md5url = prop.getProperty("md5url").trim();
+		String ypath = prop.getProperty("ypath").trim();
+		String mpath = prop.getProperty("mpath").trim();
+		String dpath = prop.getProperty("dpath").trim();
+		String md5sums = prop.getProperty("md5sums").trim();
 
 		log.info("Program started...");		
 		log.info("Below parameters have been entered...");
@@ -48,46 +62,37 @@ public class DownloadData {
 		log.info("End Range ==> " +endRange);
 		log.info("compFmt ==> " +compFmt);
 		log.info("Conf Property ==> " +confProp);
-		
-		String zip = prop.getProperty("zip").trim();
-		String raw = prop.getProperty("raw").trim();
-		String csvzip = prop.getProperty("csvzip").trim();
-		String url = prop.getProperty("url").trim();
-		String md5url = prop.getProperty("md5url").trim();
-		String ypath = prop.getProperty("ypath").trim();
-		String mpath = prop.getProperty("mpath").trim();
-		String dpath = prop.getProperty("dpath").trim();
-		String md5sums = prop.getProperty("md5sums").trim();
 
 		try {
 
-			List<Date> dates = new ArrayList<Date>();			
-			
-			//Freq	:	Yearly/Monthly/Daily
+			/*** To download file based on input frequency - Yearly(Y/y)/Monthly(M/m)/Daily(D/d) ***/ 
 			switch (freq) {
 
+			// Yearly 
 			case "Y":
 			case "y":
-				
+
 				//Get list of files YEAR wise between start and end date given
 				for(int i=Integer.parseInt(startRange); i<=Integer.parseInt(endRange); i++){
 
-					if (dL == "Y") {												
-						//Download GDELT file
-						downloadFromUrl(url +i +zip, ypath +i +raw +i +zip);												
+					// Path to download yearly files
+					String sYearlyPath = ypath +i +raw +i +zip;
+
+					//Download file from given URL
+					if ("Y".equalsIgnoreCase(dL)) {												
+						downloadFromUrl(url +i +zip, sYearlyPath);												
 					} 
 
-					if (hC == "Y") {
-						//Download MD5SUM file
+					//Download MD5SUM published file & validate it against calcuated MD5
+					if ("Y".equalsIgnoreCase(hC)) {						
 						downloadFromUrl(md5url , ypath +i +raw +md5sums);
-						//MD5 check
-						final String downloadedFile = ypath +i +raw +i +zip;
+						final String downloadedFile = sYearlyPath;
 						hashCompare(ypath +i +raw +md5sums, downloadedFile);
 					}
 
-					if (uZ == "Y") {
-						//Unzip
-						String zipFilePath = ypath +i +raw +i +zip;
+					//Unzip validated file
+					if ("Y".equalsIgnoreCase(uZ)) {
+						String zipFilePath = sYearlyPath;
 						String destDir = ypath +i +raw +i ;
 						unzip(zipFilePath, destDir);
 					}
@@ -95,16 +100,17 @@ public class DownloadData {
 				}
 				break;
 
+				// Monthly
 			case "M":
 			case "m":
-				
+
 				//Get list of files MONTH wise between start and end date given
 				DateFormat formatter = new SimpleDateFormat("yyyyMM");
 				Calendar begCal = Calendar.getInstance();
 				Calendar finCal = Calendar.getInstance();
 				begCal.setTime(formatter.parse(startRange));
 				finCal.setTime(formatter.parse(endRange));
-				
+
 				while(begCal.before(finCal)){
 					String date = formatter.format(begCal.getTime()).toUpperCase();
 					begCal.add(Calendar.MONTH, 1);
@@ -132,22 +138,23 @@ public class DownloadData {
 
 				break;
 
+				//Daily
 			case "D":
 			case "d":
-				
-				//Get list of files DATE wise between start and end date given
+				/*** Get list of files DATE wise between start and end date given ***/
+				List<Date> dates = new ArrayList<Date>();			
 				DateFormat formatter1 = new SimpleDateFormat("yyyyMMdd");
 				Date startDate = formatter1.parse(startRange);
 				Date endDate = formatter1.parse(endRange);
 				long interval = 24*1000*60*60;
 				long endTime = endDate.getTime();
 				long curTime = startDate.getTime();
-				
+
 				while (curTime <=endTime){
 					dates.add(new Date(curTime));
 					curTime += interval;
 				}
-				
+
 				for(int i=0;i<dates.size();i++){
 					Date lDate=dates.get(i);
 					String ds = formatter1.format(lDate);
@@ -179,26 +186,33 @@ public class DownloadData {
 		catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		log.info("Program Completed Successfully...");
-		
+
 		return 0;
 	}
 
+	/** Method to download file from the given URL
+	 * @param urlStr
+	 * @param file
+	 * @throws IOException
+	 */
 	private static void downloadFromUrl(String urlStr, String file) throws IOException{
 
+		log.info("file ******* " +file);
+		log.info("urlStr ******* " +urlStr);
 		//Check if Target zip file already exists
 		File tgtFile = new File(file);
 		if (tgtFile.exists()){
 			log.info("Target ZIP file already exists");
 			System.exit(5);
 		}		
-		
-		//Set Proxy details
+
+		/*	//Set Proxy details
 		System.getProperties().put("proxySet","true");
 		System.getProperties().put("http.proxyHost","proxy.jpmchase.net");
 		System.getProperties().put("http.proxyPort","8443");
-
+		 */
 		URL url = new URL(urlStr);
 		HttpURLConnection httpConn = (HttpURLConnection)url.openConnection();
 		int rc = httpConn.getResponseCode();
@@ -208,12 +222,16 @@ public class DownloadData {
 			log.info("File not present - please check " +rc +" => " +urlStr);
 			System.exit(4);
 		}
-		
+
 		log.info("Downloading starts" +urlStr);
 
 		// create Output directory if it doesn't exist
-		if(!tgtFile.exists()) tgtFile.mkdirs();
-		
+		if(!tgtFile.exists()){
+			log.info("Target File ***** " +tgtFile);
+			log.info("Target's Parent File ***** " +tgtFile.getParentFile());
+			tgtFile.getParentFile().mkdirs();
+		}
+
 		BufferedInputStream bis = new BufferedInputStream(url.openStream());
 		FileOutputStream fis = new FileOutputStream(file);
 		byte[] buffer = new byte[1024];
@@ -229,6 +247,10 @@ public class DownloadData {
 		log.info("Downloading " +file +" complete");
 	}
 
+	/**
+	 * @param zipFilePath
+	 * @param destDir
+	 */
 	private static void unzip(String zipFilePath, String destDir) {
 		File dir = new File(destDir);
 
@@ -273,6 +295,11 @@ public class DownloadData {
 		}
 	}
 
+	/**
+	 * @param sFilePath - Published file
+	 * @param downloadedFile - Downloaded zip file
+	 * @throws NoSuchAlgorithmException
+	 */
 	private static void hashCompare (String sFilePath, String downloadedFile) throws NoSuchAlgorithmException {
 
 		MessageDigest digest = MessageDigest.getInstance("MD5");
@@ -308,7 +335,7 @@ public class DownloadData {
 		try{
 			boolean isValid = compareFileChecksum(expected, actual);
 			log.info("Is MD5 validation fine?" +isValid);
-			if (isValid == false){
+			if (!isValid){
 				throw new IOException();
 			}
 		} catch (IOException e) {
