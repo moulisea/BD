@@ -1,17 +1,40 @@
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.nio.charset.Charset;
-import org.apache.commons.io.IOUtils;
-public class TMPFileReader {
-public static void main(String[] args) throws Exception {
-String inputFileName = "C://Users//chenna_gottam//Desktop//Test.txt";
-FileInputStream fileInputStream = new FileInputStream(inputFileName);
-String content = IOUtils.toString(fileInputStream, Charset.defaultCharset());
-content = content.replaceAll("-", "9");
-String outputFileName = "C://Users//chenna_gottam//Desktop//TestOut.txt";
-FileOutputStream fileOutputStream = new FileOutputStream(outputFileName);
-IOUtils.write(content, new FileOutputStream(outputFileName), Charset.defaultCharset());
-fileInputStream.close();
-fileOutputStream.close();
+package org.mouli.java.bdtools.controller;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+public class TMPReaderWriter {
+public static void main(String[] args) throws IOException {
+BufferedReader buffReader = null;
+// below is the out file
+File outFile = new File("C://Users//chenna_gottam//Desktop//TestOut.txt");
+if (!outFile.exists()) {
+outFile.createNewFile();
+}
+// creating out file writer and buff writer
+FileWriter fileWriter = new FileWriter(outFile.getAbsoluteFile());
+BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+try {
+String readContent;
+buffReader = new BufferedReader(new FileReader("C://Users//chenna_gottam//Desktop//Test.txt"));
+while ((readContent = buffReader.readLine()) != null) {
+readContent = readContent.replace("\\t", "-");
+bufferedWriter.write(readContent);
+System.out.println(readContent);
+}
+bufferedWriter.flush();
+} catch (IOException e) {
+e.printStackTrace();
+} finally {
+try {
+fileWriter.close();
+if (buffReader != null)buffReader.close();
+if (bufferedWriter != null) bufferedWriter.close();
+} catch (IOException ex) {
+ex.printStackTrace();
+}
+}
 }
 }
