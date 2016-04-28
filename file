@@ -1,0 +1,149 @@
+package com.jpmis.test;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+
+/** 
+ * Utility class to perform general file operations, including reading/writing
+ * text files.
+ */
+public final class FileUtils {
+
+    // don't allow instantiation
+    private FileUtils() {        
+    }
+    
+    /** 
+     * Reads and returns the contents of the specified text file, as a string.
+     * 
+     * @param fileName  fully-qualified name of text file to read contents from. 
+     * @return  the contents of the specified text file, as a string.
+     * @throws IOException  if an IO exception is detected during file 
+     * processing.
+     */
+    public static String readTextFile(String fileName) throws IOException {
+        // create buffered reader to read chars from input file
+        BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        return readText(reader);
+    }
+    
+    /** 
+     * Reads and returns the contents of the specified text file, as a string.
+     * 
+     * @param fileSystem Hadoop FileSystem object to read HDFS file from.
+     * @param fileName  fully-qualified name of text file to read contents from. 
+     * @return  the contents of the specified text file, as a string.
+     * @throws IOException  if an IO exception is detected during file 
+     * processing.
+     */
+    public static String readTextFile(FileSystem fileSystem, 
+            String fileName) throws IOException {
+        
+        // create buffered reader to read chars from input file
+        Path path = new Path(fileName);
+        BufferedReader reader = 
+                new BufferedReader(new InputStreamReader(fileSystem.open(path)));
+        return readText(reader);
+    }
+    
+    /** 
+     * Reads and returns the contents from the specified reader, as a string.
+     * 
+     * @param reader reader to read contents from.
+     * @return  the contents of the specified reader, as a string.
+     * @throws IOException  if an IO exception is detected during file 
+     * processing.
+     */
+    public static String readText(BufferedReader reader) throws IOException {
+        
+        StringBuilder sb = new StringBuilder(1024);
+        try {
+            // read characters from buffer, 1K at a time
+            char[] charBuffer = new char[1024];
+            int numRead;
+            while((numRead = reader.read(charBuffer)) > -1){
+                // add contents to string builder
+                sb.append(charBuffer, 0, numRead);     
+            }            
+        }
+        finally {
+            if (reader != null)
+                reader.close();
+        }
+        return sb.toString();
+    }    
+    
+    /** 
+     * Reads and returns the contents of the specified binary file, as a byte array.
+     * 
+     * @param fileName  fully-qualified name of binary file to read contents from. 
+     * @return  the contents of the specified binary file, as a byte array.
+     * @throws IOException  if an IO exception is detected during file 
+     * processing.
+     */
+    public static byte[] readBinaryFile(String fileName) throws IOException {
+        // create data input stream to read bytes from input file
+        FileInputStream fis = new FileInputStream(fileName);
+        DataInputStream dis = new DataInputStream(fis);
+        byte[] data = new byte[dis.available()];
+        dis.readFully(data);
+        
+        return data;
+    }
+    
+    
+    /** 
+     * Writes the specified text to the specified file.
+     * 
+     * @param text  text contents to write to file.
+     * @param fileName  fully-qualified name of text file to write contents to.
+     * @throws IOException  if an IO exception is detected during file 
+     * processing.
+     */
+    public static void writeTextFile(String text, String fileName) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+        try {
+            writer.write(text);
+            writer.flush();            
+        }
+        finally {
+            writer.close();
+        }
+    }
+    
+    public static String readHeader(String fileName) throws IOException {
+    	
+    	FileInputStream fs= new FileInputStream(fileName);
+    	BufferedReader br = new BufferedReader(new InputStreamReader(fs));
+    	String headerLine = br.readLine();
+    	br.close();
+    	return headerLine;  	
+    }
+    
+    public static Map<String, String> readHashMap(String fileName) throws IOException {
+    	
+    	Map<String, String> map = new HashMap<String, String>();
+    	FileInputStream fs= new FileInputStream(fileName);
+    	BufferedReader br = new BufferedReader(new InputStreamReader(fs));
+    	String line = "";
+        while ((line = br.readLine()) != null) {
+            String parts[] = line.split("\\x01");
+            map.put(parts[0], parts[1]);
+        }
+        br.close();
+        System.out.println(map.toString());    	  
+    	return map;  	
+    }
+    
+}
