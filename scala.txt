@@ -1,0 +1,48 @@
+
+http://why-not-learn-something.blogspot.com/2016/07/apache-spark-rdd-vs-dataframe-vs-dataset.html 
+http://training.databricks.com/visualapi.pdf
+
+RDD - lazy evaluation
+immutable parallel colln of objects exposed with lambda functions
+being in memory, rdds involve overhead of GC 
+
+DF - is an abstraction which gives a schema view of data
+2 features - custom mem mgmt(data stored in offheap mem, no GC) - optimized execn plans
+
+flatMap return list of elements
+Map return one element
+
+Transformations
+General
+filter=similar to where clause in sql
+map, flatMap, filter, mapPartitions, mapPartitionsWithIndex, groupBy, sortBy
+groupByKey, reduceByKey 
+
+Math
+sample, randomSplit
+
+Relational
+union, intersection, subtract, distinct, cartesian, zip
+cogroup,subtractByKey
+
+datastructure/ io
+keyBy, pipe, zipWithIndex, zipPartitions
+
+Actions
+reduce, collect, aggregate, fold, first, take, forEach, top, treeAggregate, forEachPartition, collectAsMap
+
+Math
+count, takeSample, max, min, sum, histogram, variance
+countByKey
+countByValue
+
+Relational
+takeOrdered
+
+datastructure/ io
+saveAsTextFile
+saveAsSequenceFile
+saveAsObjectFile
+saveAsHadoopDataset
+saveAsHadoopFile
+

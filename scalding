@@ -1,0 +1,23 @@
+READ AND WRITE TO ANOTHER FILE - o/p annotated with line numbers
+------------------------------
+
+import com.twitter.scalding._
+
+val input=TextLine("data/a.txt")
+val output=TextLine("data/b.txt")
+input.read.write(output)
+
+--=====================================
+just to write the data alone from above case
+
+input.read..project('line).write(output)
+
+scalding functions divided into 4 types - map like fns - grouping fns - group/reduce operns - join operns
+
+Map like fns - map, flatmap, mapTo, flatMapTo, project, discard, insert, rename, limit, filter, filterNot, unique, pack, unpack
+
+Grouping fnd - groupBy, groupAll(single reducer)
+
+Group/Reduce operns - .size, .average(field), .sum(field), .count(field){fn}, .sortBy(fields), pivot, unpivot
+
+Joins - joinWithSmaller, joinWithLarger - joinWithTiny

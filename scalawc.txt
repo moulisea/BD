@@ -1,0 +1,24 @@
+package wordcount
+
+import org.apache.spark.SparkContext, org.apache.spark.SparkConf
+
+
+object WordCount {
+  def main(args:Array[String]){
+    val conf = new SparkConf()
+      .setAppName("wordcount")
+      .setMaster("local[*]")
+    val sc = new SparkContext(conf)
+    val inputfile = sc.textFile("/tenants/opsdata/shared/wholesale/data/sentence.txt")
+    val counts = inputfile.flatMap(line => line.split("")).map(word => (word,1)).reduceByKey(_+_)
+    counts.toDebugString
+    counts.saveAsTextFile("/tenants/opsdata/shared/wholesale/data/soutput/")
+  }
+}
+
+/*
+object hw {
+  def main(args:Array[String]){
+    println("Hello World");
+  }
+}*/
